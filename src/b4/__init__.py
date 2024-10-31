@@ -144,7 +144,7 @@ DEFAULT_CONFIG = {
     'thanks-pr-template': None,
     # See thanks-am-template.example
     'thanks-am-template': None,
-    # If this is not set, we'll use what we find in 
+    # If this is not set, we'll use what we find in
     # git-config for gpg.program, and if that's not set,
     # we'll use "gpg" and hope for the better
     'gpgbin': None,
@@ -2497,6 +2497,8 @@ class LoreSubject:
 
     def get_rebuilt_subject(self, eprefixes: Optional[List[str]] = None) -> str:
         exclude = None
+        version = ''
+        expected = ''
         if eprefixes and 'PATCH' in eprefixes:
             exclude = ['patch']
         _pfx = self.get_extra_prefixes(exclude=exclude)
@@ -2504,15 +2506,19 @@ class LoreSubject:
             for _epfx in eprefixes:
                 if _epfx.lower() not in [x.lower() for x in _pfx]:
                     _pfx.append(_epfx)
+        if len(_pfx) > 0:
+            # This is added to handle the extra space after
+            # subject prefixes
+            _pfx.append('')
         if 'patch' not in [x.lower() for x in _pfx]:
             _pfx.insert(0, 'PATCH')
         if self.revision > 1:
-            _pfx.append(f'v{self.revision}')
+            version = f' v{self.revision}'
         if self.expected > 1:
-            _pfx.append('%s/%s' % (str(self.counter).zfill(len(str(self.expected))), self.expected))
+            expected = ' %s/%s' % (str(self.counter).zfill(len(str(self.expected))), self.expected)
 
-        if len(_pfx):
-            return '[' + ' '.join(_pfx) + '] ' + self.subject
+        if len(_pfx) or len(version) or len(expected):
+            return '[' + _pfx[0] + '][' + ' '.join(p for p in _pfx[1:] if p) + version + expected + '] ' + self.subject
         else:
             return f'[PATCH] {self.subject}'
 
